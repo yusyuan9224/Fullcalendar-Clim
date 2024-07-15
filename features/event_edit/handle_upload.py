@@ -78,6 +78,14 @@ def get_files_in_folder(folder_id):
 def get_file_download_link(file_id):
     return f"https://drive.google.com/uc?id={file_id}&export=download"
 
+def get_file_open_link(file_id):
+    return f"https://drive.google.com/file/d/{file_id}/view"
+
+def get_folder_open_link(folder_id):
+    if isinstance(folder_id, list):
+        folder_id = folder_id[0]
+    return f"https://drive.google.com/drive/folders/{folder_id}"
+
 def delete_local_files(folder_path):
     try:
         for root, dirs, files in os.walk(folder_path, topdown=False):

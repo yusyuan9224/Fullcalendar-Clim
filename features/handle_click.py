@@ -2,7 +2,7 @@ from nicegui import ui
 from datetime import datetime
 from .category_color import get_category_color_selection
 from .recurring_events import get_recurring_event_selection
-from .event_edit.handle_upload import handle_upload, get_files_in_folder, get_file_download_link
+from .event_edit.handle_upload import handle_upload, get_files_in_folder, get_file_download_link, get_file_open_link, get_folder_open_link
 from .event_edit.save_event import save_event_to_google_sheet
 from .delete_event import delete_event
 from .event_edit.filter_event_info import filter_event_info
@@ -47,14 +47,18 @@ def handle_click(calendar, event):
             attachment_input = ui.upload(on_upload=on_upload).style('width: 100%; margin-top: 10px;')
             attachment_input.visible = False
 
-            # 显示现有附件
             if event_info.get('attachments'):
                 folder_id = event_info.get('attachments')
+                folder_open_link = get_folder_open_link(folder_id)
+                ui.button('Open Folder', on_click=lambda link=folder_open_link: ui.open(link,new_tab=True)).style('width: 100%; margin-top: 10px;')
                 files = get_files_in_folder(folder_id)
                 for file in files:
                     download_link = get_file_download_link(file['id'])
+                    open_link = get_file_open_link(file['id'])
                     ui.label(f"Current Attachment: {file['name']}").style('width: 100%; margin-top: 10px;')
-                    ui.button('Download Attachment', on_click=lambda link=download_link: ui.open(link)).style('width: 100%; margin-top: 10px;')
+                    with ui.row().style('width: 100%; margin-bottom: 10px;'):
+                        ui.button('Download Attachment', on_click=lambda link=download_link: ui.open(link,new_tab=True)).style('width: 48%; margin-top: 10px;')
+                        ui.button('Open Attachment', on_click=lambda link=open_link: ui.open(link,new_tab=True)).style('width: 48%; margin-top: 10px;')
 
             attachment_checkbox.on_value_change(lambda: setattr(attachment_input, 'visible', attachment_checkbox.value))
 
@@ -108,7 +112,7 @@ def handle_click(calendar, event):
                     description_input.value,
                     frequency_input.value if repeat_checkbox.value else "None",  # 仅当勾选复选框时传递频率
                     int(occurrences_input.value) if repeat_checkbox.value else 1,  # 确保传递的重复次数为整数
-                    folder_id,
+                    folder_id or event_info.get('attachments', None),
                     reminder_checkbox.value,
                     reminder_switch_start.value,
                     reminder_switch_end.value,
