@@ -91,10 +91,10 @@ def handle_click(calendar, event):
             reminder_checkbox.on_value_change(toggle_reminder_settings)
 
             def save_event():
-                folder_id = None
+                folder_id = event_info.get('attachments',None)
                 if attachment_checkbox.value:
                     for uploaded_file in uploaded_files:
-                        folder_id = handle_upload(uploaded_file, title_input.value)
+                        folder_id = handle_upload(uploaded_file, title_input.value,folder_id)
                 
                 save_event_to_google_sheet(
                     calendar,

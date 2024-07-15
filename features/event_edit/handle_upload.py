@@ -40,6 +40,14 @@ def upload_file_to_drive(file_path, folder_id):
         print(f"Failed to upload file: {e}")
         raise
 
+def delete_file_from_drive(file_id):
+    try:
+        drive_service.files().delete(fileId=file_id).execute()
+        print(f"Deleted file with ID: {file_id}")
+    except Exception as e:
+        print(f"Failed to delete file: {e}")
+        raise
+
 def handle_upload(file, title: str, folder_id=None):
     if not title:
         ui.notify('Please enter the title before uploading attachments.', color='red')
@@ -65,6 +73,8 @@ def handle_upload(file, title: str, folder_id=None):
     
 def get_files_in_folder(folder_id):
     try:
+        if isinstance(folder_id,list):
+            folder_id = folder_id[0]
         query = f"'{folder_id}' in parents and trashed=false"
         results = drive_service.files().list(q=query, fields="files(id, name)").execute()
         items = results.get('files', [])
@@ -75,4 +85,17 @@ def get_files_in_folder(folder_id):
 
 def get_file_download_link(file_id):
     return f"https://drive.google.com/uc?id={file_id}&export=download"
+
+def delete_local_files(folder_path):
+    try:
+        for root, dirs, files in os.walk(folder_path, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(folder_path)
+        print(f"Deleted local folder: {folder_path}")
+    except Exception as e:
+        print(f"Failed to delete local files: {e}")
+        raise
 
