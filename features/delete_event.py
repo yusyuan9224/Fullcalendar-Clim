@@ -28,16 +28,16 @@ def delete_event(calendar, title, start, end, dialog):
 
     if event_to_delete:
         # 刪除雲端文件
-        folder_id = event_to_delete.get('attachments', [])
+        folder_id = event_to_delete.get('attachments')
         if folder_id:
             files = get_files_in_folder(folder_id)
             for file in files:
                 delete_file_from_drive(file['id'])
             delete_folder_from_drive(folder_id)
 
-        # 刪除本地文件
-        local_folder_path = f"uploads/{title}"
-        delete_local_files(local_folder_path)
+            # 刪除本地文件
+            local_folder_path = f"uploads/{title}"
+            delete_local_files(local_folder_path)
 
         # 刪除事件
         calendar.events.remove(event_to_delete)

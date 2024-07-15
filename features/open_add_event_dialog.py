@@ -1,9 +1,8 @@
-# open_add_event_dialog.py
 from nicegui import ui
 from datetime import datetime, timedelta
 from .category_color import get_category_color_selection, get_category_color
 from .recurring_events import get_recurring_event_selection
-from .event_edit.handle_upload import handle_upload, create_folder
+from .event_edit.handle_upload import handle_upload, create_folder, get_files_in_folder, get_file_download_link, get_file_open_link, get_folder_open_link
 from .event_edit.save_event import save_event_to_google_sheet
 from .event_edit.generate_recurring_events import generate_recurring_events
 from .event_edit.send_email import send_email  # Import the send_email function
@@ -36,8 +35,13 @@ def open_add_event_dialog(calendar, date_info):
             ui.label('Description').style('width: 100px;')
             description_input = ui.textarea().style('width: 100%;').props('clearable;autogrow')
 
+        uploaded_files = []
+
+        def on_upload(e):
+            uploaded_files.append(e)
+
         attachment_checkbox = ui.checkbox('Add Attachment').style('width: 100%; margin-top: 10px;')
-        attachment_input = ui.upload(on_upload=lambda e: handle_upload(e, title_input.value)).style('width: 100%; margin-top: 10px;')
+        attachment_input = ui.upload(on_upload=on_upload).style('width: 100%; margin-top: 10px;')
         attachment_input.visible = False
 
         attachment_checkbox.on_value_change(lambda: setattr(attachment_input, 'visible', attachment_checkbox.value))
@@ -102,6 +106,11 @@ def open_add_event_dialog(calendar, date_info):
 
             # 保存事件到 Google Sheet
             for event in recurring_events:
+                folder_id = None
+                if attachment_checkbox.value:
+                    for uploaded_file in uploaded_files:
+                        folder_id = handle_upload(uploaded_file, title_input.value, folder_id)
+                
                 save_event_to_google_sheet(
                     calendar,
                     "",  # old_title
@@ -122,6 +131,7 @@ def open_add_event_dialog(calendar, date_info):
                     event['recipients'],
                     dialog
                 )
+                event['color'] = color
 
         ui.button('Add', on_click=add_event).style('width: 100%; margin-top: 10px;')
     dialog.open()

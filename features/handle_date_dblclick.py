@@ -1,4 +1,3 @@
-# handle_date_dblclick.py
 from nicegui import ui
 from datetime import datetime
 from .category_color import get_category_color_selection, get_category_color
@@ -41,8 +40,13 @@ def handle_date_dblclick(calendar, event):
             ui.label('Description').style('width: 100px;')
             description_input = ui.textarea().style('width: 100%;').props('clearable;autogrow')
 
+        uploaded_files = []
+
+        def on_upload(e):
+            uploaded_files.append(e)
+
         attachment_checkbox = ui.checkbox('Add Attachment').style('width: 100%; margin-top: 10px;')
-        attachment_input = ui.upload(on_upload=lambda e: handle_upload(e, title_input.value)).style('width: 100%; margin-top: 10px;')
+        attachment_input = ui.upload(on_upload=on_upload).style('width: 100%; margin-top: 10px;')
         attachment_input.visible = False
 
         attachment_checkbox.on_value_change(lambda: setattr(attachment_input, 'visible', attachment_checkbox.value))
@@ -87,7 +91,7 @@ def handle_date_dblclick(calendar, event):
             description = description_input.value
             frequency = frequency_input.value if repeat_checkbox.value else "None"
             occurrences = int(occurrences_input.value) if repeat_checkbox.value else 1
-            attachments = [attachment_input.last_upload_name] if attachment_checkbox.value and hasattr(attachment_input, 'last_upload_name') else []
+            folder_id = None
             reminder_start = reminder_switch_start.value
             reminder_end = reminder_switch_end.value
             reminder_time = int(reminder_time_input.value) if (reminder_switch_start.value or reminder_switch_end.value) else None
@@ -97,7 +101,7 @@ def handle_date_dblclick(calendar, event):
 
             # 生成重複事件
             recurring_events = generate_recurring_events(
-                title, start, end, category, color, description, frequency, occurrences, attachments, reminder_start, reminder_end, reminder_time, recipients
+                title, start, end, category, color, description, frequency, occurrences, folder_id, reminder_start, reminder_end, reminder_time, recipients
             )
 
             # 確認所有必填字段已填寫
@@ -107,6 +111,10 @@ def handle_date_dblclick(calendar, event):
 
             # 保存事件到 Google Sheet
             for event in recurring_events:
+                if attachment_checkbox.value:
+                    for uploaded_file in uploaded_files:
+                        folder_id = handle_upload(uploaded_file, title_input.value, folder_id)
+                
                 save_event_to_google_sheet(
                     calendar,
                     "",  # old_title
@@ -119,7 +127,7 @@ def handle_date_dblclick(calendar, event):
                     event['description'],
                     event['frequency'],
                     event['occurrences'],
-                    event['attachments'],
+                    folder_id,
                     reminder_checkbox.value,
                     event['reminder_start'],
                     event['reminder_end'],
@@ -127,6 +135,8 @@ def handle_date_dblclick(calendar, event):
                     event['recipients'],
                     dialog
                 )
+
+                event['color'] = color
 
         ui.button('Add', on_click=add_event).style('width: 100%; margin-top: 10px;')
     dialog.open()
