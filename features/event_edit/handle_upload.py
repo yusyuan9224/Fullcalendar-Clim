@@ -30,7 +30,7 @@ def upload_file_to_drive(file_path, folder_id):
     try:
         file_metadata = {
             'name': os.path.basename(file_path),
-            'parents': [folder_id]
+            'parents': [folder_id] if folder_id else []
         }
         media = MediaFileUpload(file_path, resumable=True)
         file = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
@@ -40,21 +40,13 @@ def upload_file_to_drive(file_path, folder_id):
         print(f"Failed to upload file: {e}")
         raise
 
-def delete_file_from_drive(file_id):
-    try:
-        drive_service.files().delete(fileId=file_id).execute()
-        print(f"Deleted file with ID: {file_id}")
-    except Exception as e:
-        print(f"Failed to delete file: {e}")
-        raise
-
 def handle_upload(file, title: str, folder_id=None):
     if not title:
         ui.notify('Please enter the title before uploading attachments.', color='red')
         return None
 
     try:
-        if folder_id is None:
+        if not folder_id:
             folder_id = create_folder(title)
         file_path = f'uploads/{title}/{file.name}'
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -70,11 +62,11 @@ def handle_upload(file, title: str, folder_id=None):
         print(f"Error during file upload: {e}")
         ui.notify(f"Failed to upload file: {e}", color='red')
         return None
-    
+
 def get_files_in_folder(folder_id):
     try:
-        if isinstance(folder_id,list):
-            folder_id = folder_id[0]
+        if isinstance(folder_id, list):
+            folder_id = folder_id[0]  # 使用第一個資料夾ID
         query = f"'{folder_id}' in parents and trashed=false"
         results = drive_service.files().list(q=query, fields="files(id, name)").execute()
         items = results.get('files', [])
@@ -99,3 +91,18 @@ def delete_local_files(folder_path):
         print(f"Failed to delete local files: {e}")
         raise
 
+def delete_file_from_drive(file_id):
+    try:
+        drive_service.files().delete(fileId=file_id).execute()
+        print(f"Deleted file with ID: {file_id}")
+    except Exception as e:
+        print(f"Failed to delete file: {e}")
+        raise
+
+def delete_folder_from_drive(folder_id):
+    try:
+        drive_service.files().delete(fileId=folder_id).execute()
+        print(f"Deleted folder with ID: {folder_id}")
+    except Exception as e:
+        print(f"Failed to delete folder: {e}")
+        raise

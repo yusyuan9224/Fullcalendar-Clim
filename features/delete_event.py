@@ -1,7 +1,7 @@
 from nicegui import ui
 from datetime import datetime
 from .event_edit.upload_to_google_sheet import upload_to_google_sheet
-from .event_edit.handle_upload import delete_file_from_drive, get_files_in_folder, delete_local_files
+from .event_edit.handle_upload import delete_file_from_drive, get_files_in_folder, delete_local_files, delete_folder_from_drive
 
 def delete_event(calendar, title, start, end, dialog):
     # 格式化輸入的開始和結束時間
@@ -33,6 +33,7 @@ def delete_event(calendar, title, start, end, dialog):
             files = get_files_in_folder(folder_id)
             for file in files:
                 delete_file_from_drive(file['id'])
+            delete_folder_from_drive(folder_id)
 
         # 刪除本地文件
         local_folder_path = f"uploads/{title}"
