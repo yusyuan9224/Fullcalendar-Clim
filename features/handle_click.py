@@ -79,7 +79,16 @@ def handle_click(calendar, event):
             reminder_time_input = ui.number(label='Reminder Time (minutes)', value=event_info.get('reminder_time', 10), min=1).style('width: 100%;')
             reminder_switch_start = ui.switch('Reminder Before Start', value=event_info.get('reminder_start', False)).style('width: 100%;')
             reminder_switch_end = ui.switch('Reminder Before End', value=event_info.get('reminder_end', False)).style('width: 100%;')
-            recipients_input = ui.input('Recipients (comma separated)', value=",".join(event_info.get('recipients', []))).style('width: 100%;')
+            
+            recipients = event_info.get('recipients', [])
+            if isinstance(recipients, list):
+                recipients_str = ", ".join(recipients)
+            elif isinstance(recipients, str):
+                recipients_str = recipients
+            else:
+                recipients_str = ""
+            recipients_input = ui.input('Recipients (comma separated)', value=recipients_str).style('width: 100%;')
+            
 
             reminder_time_input.visible = reminder_checkbox.value
             reminder_switch_start.visible = reminder_checkbox.value
